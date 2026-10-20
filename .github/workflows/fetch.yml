@@ -1,0 +1,26 @@
+name: fetch-images
+on:
+  push:
+    paths: ['fetch/list.txt']
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: download
+        run: |
+          mkdir -p fetch/out
+          while read -r name url; do
+            [ -z "$name" ] && continue
+            curl -sSL -A "Mozilla/5.0" -o "fetch/out/$name" "$url" || echo "fail $name"
+          done < fetch/list.txt
+          ls -la fetch/out
+      - name: commit
+        run: |
+          git config user.name "ea-bot"
+          git config user.email "ea-bot@users.noreply.github.com"
+          git add fetch/out
+          git commit -m "fetched images" || echo nothing
+          git push
